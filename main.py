@@ -11,8 +11,6 @@ from werewolf import Werewolf
 from enums import BotMode
 
 DISCORD_MSG_CHAR_LIMIT = 2000
-VOTE_TIME = 11
-LOBBY_TIME = 60
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -39,6 +37,8 @@ class FunBot(discord.Client):
         self.is_voting = False
         super().__init__()
         self.time_task = self.loop.create_task(self.countdown_task())
+
+        self.game_vote_result_message = None
 
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
@@ -72,7 +72,7 @@ class FunBot(discord.Client):
             log.info('Mode: None')
             if command == 'เล่น' or command == 'p' and args[0] is not '':
                 if not self.is_voting:
-                    self.time = VOTE_TIME
+                    self.time = self.config['GAME_VOTE_TIME']
                     self.is_voting = True
                     self.counting_down = True
                 if args[0].lower() == 'spyfall':
@@ -83,11 +83,14 @@ class FunBot(discord.Client):
                     self.votes[BotMode.WEREWOLF] += 1
                 elif args[0].lower() == 'quiz':
                     self.votes[BotMode.QUIZ] += 1
-            vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: ' + str(self.votes[BotMode.SPYFALL])
-            vote_message += 'Avalon: ' + str(self.votes[BotMode.AVALON])
-            vote_message += 'Werewolf: ' + str(self.votes[BotMode.WEREWOLF])
-            vote_message += 'Quiz: ' + str(self.votes[BotMode.QUIZ])
-            await self.safe_send_message(channel, vote_message, also_delete=message)
+            vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: \n' + str(self.votes[BotMode.SPYFALL])
+            vote_message += 'Avalon: \n' + str(self.votes[BotMode.AVALON])
+            vote_message += 'Werewolf: \n' + str(self.votes[BotMode.WEREWOLF])
+            vote_message += 'Quiz: \n' + str(self.votes[BotMode.QUIZ])
+            if self.game_vote_result_message is not None:
+                await self.safe_delete_message(self.game_vote_result_message)
+            self.game_vote_result_message = await self.safe_send_message(channel, vote_message, expire_in=0)
+            await self.safe_delete_message(message)
             log.info('Start counting down: ' + str(self.time))
 
         elif self.mode == BotMode.SPYFALL:
@@ -100,11 +103,11 @@ class FunBot(discord.Client):
     async def trigger_timeout(self):
         if self.mode == BotMode.NONE:
             self.is_voting = False
-            self.time = LOBBY_TIME
+            self.time = self.config['LOBBY_TIME']
             self.mode = max(self.votes.items(), key=operator.itemgetter(1))[0]
         log.info('Current mode: ' + str(self.mode))
         log.info('Time: ' + str(self.time))
-        await self.safe_send_message(self.event_channel, 'พิมพ์ เล่น เพื่อเล่นเกม', expire_in=30)
+        await self.safe_send_message(self.event_channel, 'พิมพ์ เล่น เพื่อเล่นเกม', expire_in=self.config['LOBBY_TIME'])
 
     async def outside_event_room(self, message, channel):
         message_content = message.content.strip()
@@ -112,8 +115,6 @@ class FunBot(discord.Client):
             await self.safe_send_message(channel, 'เรียกหนูทำไมหรอ', also_delete=message)
         elif 'อีอ้วน' in message_content:
             await self.safe_send_message(channel, 'อย่าว่าพี่หนูนะ', also_delete=message)
-        elif 'โอ' in message_content:
-            await self.safe_send_message(channel, 'ทรงพระแง้นๆ', also_delete=message, expire_in=1)
 
     async def private_msg(self, message, channel):
         print('Message from {0.author} {0.channel.id}: {0.content}'.format(message))
@@ -158,8 +159,12 @@ class FunBot(discord.Client):
 
     async def countdown_task(self):
         await self.wait_until_ready()
+        old_value = 0
         while not self.is_closed():
-            log.info(str(self.time))
+            if old_value != self.time:
+                old_value = self.time
+                log.info(str(self.time))
+
             channel = self.get_channel(self.config['CHANNEL_ID'])
             if self.time > 0:
                 self.time -= 1
