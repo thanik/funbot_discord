@@ -1,2 +1,4 @@
 venv
 configs/main.json
+prompt_bot.py
+ __pycache__/
