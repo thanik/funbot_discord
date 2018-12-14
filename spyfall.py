@@ -140,6 +140,7 @@ class Spyfall:
         end_message = 'เฉลย: ทุกคนอยู่ที่ ' + self.location['name'] + '\n'
         for player in self.players:
             end_message += player.mention + ' : ' + self.roles[player] + '\n'
+        end_message += 'จบเกมค่ะ'
         return end_message
 
     async def trigger_timeout(self, client):
@@ -152,6 +153,7 @@ class Spyfall:
             await client.safe_send_message(client.event_channel, ending_message, expire_in=0)
         elif self.phase == SpyfallGamePhase.START:
             if len(self.players) < MIN_PLAYERS:
+                client.mode = BotMode.NONE
                 await self.reset_game()
                 await client.reset_vote()
                 await client.safe_send_message(client.event_channel, 'คนเล่นไม่พอค่ะ ต้อง ' + str(MIN_PLAYERS) + ' คนขึ้นไปนะคะ', expire_in=10)

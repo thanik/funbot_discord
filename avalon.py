@@ -51,6 +51,7 @@ class Avalon:
         if self.phase == AvalonGamePhase.START:
             log.info('Avalon: Transition START to PREPARING')
             if len(self.players) < MIN_PLAYERS:
+                client.mode = BotMode.NONE
                 await self.reset_game()
                 await client.reset_vote()
                 await client.safe_send_message(client.event_channel,
@@ -441,6 +442,6 @@ class Avalon:
         else:
             await client.safe_send_message(client.event_channel, 'ฝ่ายมอร์เดร็ดชนะ!\nเฉลยตำแหน่ง:' + roles_list, expire_in=0)
 
+        client.mode = BotMode.NONE
         await self.reset_game()
         await client.reset_vote()
-        client.mode = BotMode.NONE

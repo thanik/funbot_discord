@@ -170,12 +170,8 @@ class FunBot(discord.Client):
             channel = self.get_channel(self.config['CHANNEL_ID'])
             if self.time > 0:
                 self.time -= 1
-                if self.time % 60 == 0:
+                if self.time % 60 == 0 or self.time % 30 == 0:
                     await self.safe_send_message(channel, 'เหลือเวลาอีก ' + str(self.time) + ' วินาที', expire_in=5)
-                elif self.time % 30 == 0:
-                    await self.safe_send_message(channel, 'เหลือเวลาอีก ' + str(self.time) + ' วินาที', expire_in=5)
-                # elif self.time == 10:
-                #     await self.safe_send_message(channel, 'เหลือเวลาอีก 10 วินาที', expire_in=5)
                 elif self.time < 11:
                     await self.safe_send_message(channel, 'เหลือเวลาอีก ' + str(self.time) + ' วินาที', expire_in=1)
             elif self.time == 0:
