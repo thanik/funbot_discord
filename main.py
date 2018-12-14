@@ -105,6 +105,7 @@ class FunBot(discord.Client):
             self.is_voting = False
             self.time = self.config['LOBBY_TIME']
             self.mode = max(self.votes.items(), key=operator.itemgetter(1))[0]
+            await self.safe_delete_message(self.game_vote_result_message)
         log.info('Current mode: ' + str(self.mode))
         log.info('Time: ' + str(self.time))
         await self.safe_send_message(self.event_channel, 'พิมพ์ เล่น เพื่อเล่นเกม', expire_in=self.config['LOBBY_TIME'])
