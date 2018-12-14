@@ -83,10 +83,10 @@ class FunBot(discord.Client):
                     self.votes[BotMode.WEREWOLF] += 1
                 elif args[0].lower() == 'quiz':
                     self.votes[BotMode.QUIZ] += 1
-            vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: \n' + str(self.votes[BotMode.SPYFALL])
-            vote_message += 'Avalon: \n' + str(self.votes[BotMode.AVALON])
-            vote_message += 'Werewolf: \n' + str(self.votes[BotMode.WEREWOLF])
-            vote_message += 'Quiz: \n' + str(self.votes[BotMode.QUIZ])
+            vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: ' + str(self.votes[BotMode.SPYFALL])
+            vote_message += '\nAvalon: ' + str(self.votes[BotMode.AVALON])
+            vote_message += '\nWerewolf: ' + str(self.votes[BotMode.WEREWOLF])
+            vote_message += '\nQuiz: ' + str(self.votes[BotMode.QUIZ])
             if self.game_vote_result_message is not None:
                 await self.safe_delete_message(self.game_vote_result_message)
             self.game_vote_result_message = await self.safe_send_message(channel, vote_message, expire_in=0)
@@ -115,6 +115,7 @@ class FunBot(discord.Client):
             await self.safe_send_message(channel, 'เรียกหนูทำไมหรอ', also_delete=message)
         elif 'อีอ้วน' in message_content:
             await self.safe_send_message(channel, 'อย่าว่าพี่หนูนะ', also_delete=message)
+
 
     async def private_msg(self, message, channel):
         print('Message from {0.author} {0.channel.id}: {0.content}'.format(message))
