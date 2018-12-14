@@ -91,7 +91,7 @@ class Spyfall:
         elif command == 'ทาย' and self.phase == SpyfallGamePhase.ENDING:
             if message.author in self.spies:
                 if args[0] == self.location['name']:
-                    self.phase == SpyfallGamePhase.END
+                    self.phase = SpyfallGamePhase.END
                     await client.safe_send_message(client.event_channel, message.author.mention +  ' ถูกต้องค่ะ ยินดีด้วยยย', expire_in=10, also_delete=message)
                     ending_message = await self.show_place()
                     log.info(ending_message)
@@ -99,6 +99,8 @@ class Spyfall:
                                                    also_delete=message)
                     await self.reset_game()
                     await client.reset_vote()
+                    client.mode = BotMode.NONE
+                    await client.change_presence(activity=None)
                 else:
                     await client.safe_send_message(client.event_channel, message.author.mention +  ' เอ๊ะๆ พิมพ์ผิดหรือเปล่า ลองใหม่นะคะ', expire_in=10, also_delete=message)
             else:

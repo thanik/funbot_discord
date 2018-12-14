@@ -81,11 +81,10 @@ class FunBot(discord.Client):
 
         if self.mode == BotMode.NONE:
             log.info('Mode: None')
-            if command == 'เล่น' or command == 'p' and args[0] != '':
+            if (command == 'เล่น' or command == 'p') and args[0] != '':
                 if not self.is_voting:
                     self.time = self.config['GAME_VOTE_TIME']
                     self.is_voting = True
-                    self.counting_down = True
                 if args[0].lower() == 'spyfall':
                     self.votes[BotMode.SPYFALL] += 1
                 elif args[0].lower() == 'avalon':
@@ -94,15 +93,15 @@ class FunBot(discord.Client):
                     self.votes[BotMode.WEREWOLF] += 1
                 elif args[0].lower() == 'quiz':
                     self.votes[BotMode.QUIZ] += 1
-            vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: ' + str(self.votes[BotMode.SPYFALL])
-            vote_message += '\nAvalon: ' + str(self.votes[BotMode.AVALON])
-            vote_message += '\nWerewolf: ' + str(self.votes[BotMode.WEREWOLF])
-            vote_message += '\nQuiz: ' + str(self.votes[BotMode.QUIZ])
-            if self.game_vote_result_message is not None:
-                await self.safe_delete_message(self.game_vote_result_message)
-            self.game_vote_result_message = await self.safe_send_message(channel, vote_message, expire_in=0)
-            await self.safe_delete_message(message)
-            log.info('Start counting down: ' + str(self.time))
+                vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: ' + str(self.votes[BotMode.SPYFALL])
+                vote_message += '\nAvalon: ' + str(self.votes[BotMode.AVALON])
+                vote_message += '\nWerewolf: ' + str(self.votes[BotMode.WEREWOLF])
+                vote_message += '\nQuiz: ' + str(self.votes[BotMode.QUIZ])
+                if self.game_vote_result_message is not None:
+                    await self.safe_delete_message(self.game_vote_result_message)
+                self.game_vote_result_message = await self.safe_send_message(channel, vote_message, expire_in=0)
+                await self.safe_delete_message(message)
+                log.info('Start counting down: ' + str(self.time))
 
         elif self.mode == BotMode.SPYFALL:
             log.info('Mode: Spyfall')
@@ -177,10 +176,12 @@ class FunBot(discord.Client):
             channel = self.get_channel(self.config['CHANNEL_ID'])
             if self.time > 0:
                 self.time -= 1
-                if self.time % 60 == 0 or self.time % 30 == 0:
-                    await self.safe_send_message(channel, 'เหลือเวลาอีก ' + str(self.time) + ' วินาที', expire_in=5)
-                elif self.time < 11:
+                minutes = int(self.time / 60)
+                seconds = int(self.time % 60)
+                if self.time < 11:
                     await self.safe_send_message(channel, 'เหลือเวลาอีก ' + str(self.time) + ' วินาที', expire_in=1)
+                elif self.time % 60 == 0 or self.time % 30 == 0:
+                    await self.safe_send_message(channel, 'เหลือเวลาอีก ' + str(minutes) + ' นาที ' + str(seconds) + ' วินาที (' + str(self.time) + ' วินาที)', expire_in=7)
             elif self.time == 0:
                 self.time = -1
                 if self.mode == BotMode.NONE:
@@ -194,7 +195,13 @@ class FunBot(discord.Client):
     async def clean_chat(self):
         await self.wait_until_ready()
         while not self.is_closed():
-            await asyncio.sleep(3600)
+            if self.mode == BotMode.NONE:
+                log.info('clean_chat_triggered')
+                await self.get_channel(self.config['CHANNEL_ID']).purge(check=self.is_admin_msg)
+                await asyncio.sleep(self.config['CLEAR_CHAT_INTERVAL'])
+
+    def is_admin_msg(self, m):
+        return m.author.id != self.config['ADMIN_ID']
 
     async def safe_send_message(self, dest, content, **kwargs):
         tts = kwargs.pop('tts', False)
