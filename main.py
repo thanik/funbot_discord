@@ -113,8 +113,7 @@ class FunBot(discord.Client):
         await self.safe_send_message(self.event_channel, 'พิมพ์ เล่น เพื่อเล่นเกม', expire_in=self.config['LOBBY_TIME'])
 
     async def outside_event_room(self, message, channel):
-        self.prompt_bot.getMessage(message, channel);
-
+        await self.prompt_bot.getMessage(client=self, message=message, channel=channel);
 
     async def private_msg(self, message, channel):
         print('Message from {0.author} {0.channel.id}: {0.content}'.format(message))
