@@ -238,4 +238,4 @@ class FunBot(discord.Client):
 
 
 client = FunBot()
-client.run(self.config['TOKEN'])
+client.run(client.config['TOKEN'])
