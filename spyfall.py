@@ -153,6 +153,8 @@ class Spyfall:
             await client.safe_send_message(client.event_channel, ending_message, expire_in=0)
         elif self.phase == SpyfallGamePhase.START:
             if len(self.players) < MIN_PLAYERS:
+                if self.playerlist is not None:
+                    await client.safe_delete_message(self.playerlist)
                 client.mode = BotMode.NONE
                 await self.reset_game()
                 await client.reset_vote()

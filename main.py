@@ -9,6 +9,7 @@ from avalon import Avalon
 from quiz import Quiz
 from werewolf import Werewolf
 from enums import BotMode
+from prompt_bot import PromptBot
 
 DISCORD_MSG_CHAR_LIMIT = 2000
 
@@ -26,6 +27,7 @@ class FunBot(discord.Client):
         self.avalon = Avalon()
         self.quiz = Quiz()
         self.werewolf = Werewolf()
+        self.prompt_bot = PromptBot()
         self.mode = BotMode.NONE
         self.time = -1
         self.votes = {
@@ -61,16 +63,16 @@ class FunBot(discord.Client):
 
     ## functions
     async def inside_event_room(self, message, channel):
-        log.info('inside_event_room from {0.author} {0.channel.id}: {0.content}'.format(message))
         message_content = message.content.strip()
         command, *args = message_content.split(
             ' ')  # Uh, doesn't this break prefixes with spaces in them (it doesn't, config parser already breaks them)
         command = command.lower().strip()
         args = ' '.join(args).lstrip(' ').split(' ')
+        log.info('inside_event_room from {0.author} {0.channel.id}: {1} {2}'.format(message, command, args))
 
         if self.mode == BotMode.NONE:
             log.info('Mode: None')
-            if command == 'เล่น' or command == 'p' and args[0] is not '':
+            if command == 'เล่น' or command == 'p' and args[0] != '':
                 if not self.is_voting:
                     self.time = self.config['GAME_VOTE_TIME']
                     self.is_voting = True
@@ -111,11 +113,7 @@ class FunBot(discord.Client):
         await self.safe_send_message(self.event_channel, 'พิมพ์ เล่น เพื่อเล่นเกม', expire_in=self.config['LOBBY_TIME'])
 
     async def outside_event_room(self, message, channel):
-        message_content = message.content.strip()
-        if 'ฮินาโนะ' in message_content:
-            await self.safe_send_message(channel, 'เรียกหนูทำไมหรอ', also_delete=message)
-        elif 'อีอ้วน' in message_content:
-            await self.safe_send_message(channel, 'อย่าว่าพี่หนูนะ', also_delete=message)
+        self.prompt_bot.getMessage(message, channel);
 
 
     async def private_msg(self, message, channel):

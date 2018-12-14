@@ -6,7 +6,7 @@ from enums import BotMode
 from enums import AvalonGamePhase, AvalonRoles, AvalonTeamVote, AvalonMissionVote
 
 TEAM_BUILDING_TIME = 450
-PREPARING_TIME = 10
+PREPARING_TIME = 20
 MISSION_TIME = 30
 ENDING_ROUND_TIME = 10
 
@@ -92,7 +92,7 @@ class Avalon:
                         await player.create_dm()
 
                     if self.roles[player] == AvalonRoles.MERLIN:
-                        await client.safe_send_message(player.dm_channel, '*ฝั่งคนดี*\nคุณคือเมอร์ลิน คุณสามารถลืมตาเพื่อดูอนาคตได้ คุณจะล่วงรู้ว่าเหล่าสาวกของมอร์เตร็ดอันเลวร้ายมีใครบ้าง และ')
+                        await client.safe_send_message(player.dm_channel, '*ฝั่งคนดี*\nคุณคือเมอร์ลิน คุณสามารถลืมตาเพื่อดูอนาคตได้ คุณจะล่วงรู้ว่าเหล่าสาวกของมอร์เดร็ดอันเลวร้ายมีใครบ้าง โปรดระวังนักฆ่าในหมู่สาวกของมอร์เดร็ดเพราะถ้าเขารู้ตัวคุณ ความพยายามทั้งหมดที่ทำมาอาจพังทลายได้ และ')
                     elif self.roles[player] == AvalonRoles.ASSASSIN:
                         await client.safe_send_message(player.dm_channel,
                                                        '*ฝั่งคนร้าย*\nคุณคือนักฆ่า หากเหล่าคนดีทำภารกิจสำเร็จครบ 3 ภารกิจ คุณจะสามารถพลิกเกมให้ชนะได้โดยฆ่าเมอร์ลินให้ได้ และ')
@@ -102,7 +102,7 @@ class Avalon:
                         await client.safe_send_message(player.dm_channel, '*ฝั่งคนดี*\nคุณคือลูกสมุนแห่งอาเธอร์ สิ่งที่คุณจะต้องทำคือ พยายามหาเหล่าคนร้ายในหมู่ของพวกคุณ และทำให้ภารกิจสำเร็จ 3 ภารกิจให้ได้')
 
                     if self.roles[player] == AvalonRoles.ASSASSIN or self.roles[player] == AvalonRoles.MORDRED_MINION or self.roles[player] == AvalonRoles.MERLIN:
-                        await client.safe_send_message(player.dm_channel, '\nนี่คือเหล่าสาวกของมอร์เตร็ดทั้งหมด รู้จักกับพวกเขาไว้ซะ\n' + evil_player_list, expire_in=0)
+                        await client.safe_send_message(player.dm_channel, '\nนี่คือเหล่าสาวกของมอร์เดร็ดทั้งหมด รู้จักกับพวกเขาไว้ซะ\n' + evil_player_list, expire_in=0)
 
                 await client.safe_send_message(client.event_channel,
                                                    'ทุกคนได้รับบทของตัวเองเรียบร้อยแล้ว คุณมีเวลาในการอ่านบทและทำความเข้าใจใน 10 วินาทีต่อจากนี้',
@@ -151,7 +151,7 @@ class Avalon:
                 # transition to ENDING for assassination
                 self.phase = AvalonGamePhase.ENDING
                 log.info('Change phase to ENDING')
-                self.ending_message = await client.safe_send_message(client.event_channel, 'สุดยอดมาก ฝ่ายอาเธอร์ทำภารกิจสำเร็จสามครั้ง นี่เป็นโอกาสสุดท้ายของฝ่ายมอร์เดร็ด นักฆ่าจงฆ่าเมอร์ลินให้ถูกคน แล้วฝ่ายมอร์เตร็ดจะชนะในทันที พิมพ์ ฆ่า แล้วตามด้วย @ ชื่อคน', expire_in=0)
+                self.ending_message = await client.safe_send_message(client.event_channel, 'สุดยอดมาก ฝ่ายอาเธอร์ทำภารกิจสำเร็จสามครั้ง นี่เป็นโอกาสสุดท้ายของฝ่ายมอร์เดร็ด นักฆ่าจงฆ่าเมอร์ลินให้ถูกคน แล้วฝ่ายมอร์เดร็ดจะชนะในทันที พิมพ์ ฆ่า แล้วตามด้วย @ ชื่อคน', expire_in=0)
             else:
                 # transition to new round
                 self.leader_player_index += 1
