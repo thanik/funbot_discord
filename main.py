@@ -16,6 +16,14 @@ DISCORD_MSG_CHAR_LIMIT = 2000
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+GAMES_NAMES = {
+    BotMode.AVALON: 'Avalon',
+    BotMode.WEREWOLF: 'Werewolf',
+    BotMode.SPYFALL: 'Spyfall',
+    BotMode.QUIZ: 'Quiz',
+    BotMode.NONE: 'อิอิกำ'
+}
+
 
 class FunBot(discord.Client):
     def __init__(self):
@@ -39,6 +47,7 @@ class FunBot(discord.Client):
         self.is_voting = False
         super().__init__()
         self.time_task = self.loop.create_task(self.countdown_task())
+        self.clean_chat_task = self.loop.create_task(self.clean_chat())
 
         self.game_vote_result_message = None
 
@@ -107,6 +116,7 @@ class FunBot(discord.Client):
             self.is_voting = False
             self.time = self.config['LOBBY_TIME']
             self.mode = max(self.votes.items(), key=operator.itemgetter(1))[0]
+            await self.change_presence(activity=discord.Game(name=GAMES_NAMES[self.mode]))
             await self.safe_delete_message(self.game_vote_result_message)
         log.info('Current mode: ' + str(self.mode))
         log.info('Time: ' + str(self.time))
@@ -180,6 +190,11 @@ class FunBot(discord.Client):
                 elif self.mode == BotMode.AVALON:
                     await self.avalon.trigger_timeout(client=self)
             await asyncio.sleep(1)
+
+    async def clean_chat(self):
+        await self.wait_until_ready()
+        while not self.is_closed():
+            await asyncio.sleep(3600)
 
     async def safe_send_message(self, dest, content, **kwargs):
         tts = kwargs.pop('tts', False)

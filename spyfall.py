@@ -87,6 +87,7 @@ class Spyfall:
             await self.reset_game()
             await client.reset_vote()
             client.mode = BotMode.NONE
+            await client.change_presence(activity=None)
         elif command == 'ทาย' and self.phase == SpyfallGamePhase.ENDING:
             if message.author in self.spies:
                 if args[0] == self.location['name']:
@@ -112,6 +113,7 @@ class Spyfall:
             if message_content == 'stop':
                 await self.reset_game()
                 client.mode = BotMode.NONE
+                await client.change_presence(activity=None)
                 client.reset_vote()
                 await client.safe_send_message(message.channel, 'Current mode: ' + str(client.mode), expire_in=0)
 
@@ -156,6 +158,7 @@ class Spyfall:
                 if self.playerlist is not None:
                     await client.safe_delete_message(self.playerlist)
                 client.mode = BotMode.NONE
+                await client.change_presence(activity=None)
                 await self.reset_game()
                 await client.reset_vote()
                 await client.safe_send_message(client.event_channel, 'คนเล่นไม่พอค่ะ ต้อง ' + str(MIN_PLAYERS) + ' คนขึ้นไปนะคะ', expire_in=10)
