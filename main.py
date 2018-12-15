@@ -163,7 +163,8 @@ class FunBot(discord.Client):
             BotMode.WEREWOLF: 0,
             BotMode.QUIZ: 0
         }
-        client.time = -1
+        self.time = -1
+        self.is_voting = False
 
     async def countdown_task(self):
         await self.wait_until_ready()
@@ -198,7 +199,7 @@ class FunBot(discord.Client):
             if self.mode == BotMode.NONE:
                 log.info('clean_chat_triggered')
                 await self.get_channel(self.config['CHANNEL_ID']).purge(check=self.is_admin_msg)
-                await asyncio.sleep(self.config['CLEAR_CHAT_INTERVAL'])
+            await asyncio.sleep(self.config['CLEAR_CHAT_INTERVAL'])
 
     def is_admin_msg(self, m):
         return m.author.id != self.config['ADMIN_ID']

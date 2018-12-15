@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import json
 import random
@@ -7,12 +6,13 @@ from enums import AvalonGamePhase, AvalonRoles, AvalonTeamVote, AvalonMissionVot
 
 TEAM_BUILDING_TIME = 300
 PREPARING_TIME = 20
-MISSION_TIME = 30
+MISSION_TIME = 16
 ENDING_ROUND_TIME = 10
 
 MIN_PLAYERS = 5
 MAX_PLAYERS = 10
 log = logging.getLogger(__name__)
+
 
 class Avalon:
     def __init__(self):
@@ -51,14 +51,15 @@ class Avalon:
         if self.phase == AvalonGamePhase.START:
             log.info('Avalon: Transition START to PREPARING')
             if len(self.players) < MIN_PLAYERS:
-                client.mode = BotMode.NONE
-                await client.change_presence(activity=None)
                 await self.reset_game()
                 await client.reset_vote()
                 await client.safe_send_message(client.event_channel,
                                                'คนเล่นไม่พอค่ะ ต้อง ' + str(MIN_PLAYERS) + ' คนขึ้นไปนะคะ',
                                                expire_in=10)
-                await client.safe_delete_message(self.playerlist)
+                if self.playerlist is not None:
+                    await client.safe_delete_message(self.playerlist)
+                client.mode = BotMode.NONE
+                await client.change_presence(activity=None)
             else:
                 await client.safe_delete_message(self.playerlist)
                 log.info('Change phase to PREPARING')
@@ -86,6 +87,7 @@ class Avalon:
                         evil_player_list += player.display_name + ' (' + player.name + ')\n'
 
                     self.votes_mission_team[player] = AvalonTeamVote.NONE
+                random.shuffle(self.players)
 
                 # tell the roles
                 for player in self.roles:
@@ -117,12 +119,14 @@ class Avalon:
             team_building_msg_string = 'ภารกิจที่ ' + str(self.round) + '\nหัวหน้าในการทำภารกิจครั้งนี้คือ ' + leader.mention + '\nพิมพ์ เลือก ตามด้วย @ ชื่อคนทีละคนเพื่อคัดเลือกคนเข้าทีมไปทำภารกิจ\nพิมพ์ ไม่เลือก ตามด้วย @ ชื่อคนทีละคน เพื่อนำคนออกจากทีมทำภารกิจ\nพิมพ์ ยืนยัน เพื่อยืนยันสมาชิกในทีมทำภารกิจ\nภารกิจนี้ต้องใช้ ' + str(self.config['mission_players'][str(len(self.players))][str(self.round)]) + ' คน\nผู้เล่นในขณะนี้: \n'
             for player in self.players:
                 team_building_msg_string += player.mention + '\n'
+            if self.team_building_message is not None:
+                client.safe_delete_message(self.team_building_message)
             self.team_building_message = await client.safe_send_message(client.event_channel, team_building_msg_string, expire_in=0)
 
         elif self.phase == AvalonGamePhase.TEAM_BUILDING:
             log.info('Avalon: Transition TEAM_BUILDING to TEAM_VOTING')
             if len(self.mission_team_members) < self.config['mission_players'][str(len(self.players))][str(self.round)]:
-                await client.safe_send_message(client.event_channel,'หมดเวลาในการเลือกทีมแล้ว โปรดเลือกสมาชิกให้ครบแล้วจะเริ่มทำการโหวตผ่านไม่ผ่านทีมทันที', expire_in=15)
+                await client.safe_send_message(client.event_channel, 'หมดเวลาในการเลือกทีมแล้ว โปรดเลือกสมาชิกให้ครบแล้วจะเริ่มทำการโหวตผ่านไม่ผ่านทีมทันที', expire_in=15)
             else:
                 await client.safe_send_message(client.event_channel,
                                                'ช่วงอภิปรายไม่ไว้วางใจ คุณไว้ใจทีมทำภารกิจนี้หรือไม่ พิมพ์ ผ่าน เพื่อให้ทีมนี้ไปทำภารกิจได้ พิมพ์ ไม่ผ่าน เพื่อไม่ให้ทีมนี้ไปทำภารกิจ',
@@ -137,22 +141,25 @@ class Avalon:
         elif self.phase == AvalonGamePhase.MISSION:
             log.info('Avalon: Transition MISSION to ENDING_ROUND')
             self.phase = AvalonGamePhase.ENDING_ROUND
+            team_list_string = 'รายชื่อผู้เข้าทำภารกิจ:\n'
+            for player in self.mission_team_members:
+                team_list_string += player.mention + '\n'
             mission_result_msg = 'โหวตภารกิจสำเร็จ: ' + str(self.mission_passed_vote_count) + '\nโหวตภารกิจล้มเหลว: ' + str(self.mission_failed_vote_count)
-            if self.mission_failed_vote_count > 0:
+            if self.round == 4 and len(self.players) > 6 and self.mission_failed_vote_count > 1:
                 # mission failed
-                log.info('Mission failed')
-                self.failed_missions_count += 1
-                mission_result_msg += '\nภารกิจสำเร็จไปแล้ว: ' + str(self.success_missions_count) + '\nภารกิจล้มเหลวไปแล้ว: ' + str(self.failed_missions_count)
-                await client.safe_send_message(client.event_channel, 'ภารกิจล้มเหลว เนื่องจากมีสมาชิกในทีมอย่างน้อยหนึ่งคนทำภารกิจไม่สำเร็จ\n' + mission_result_msg, expire_in=45)
-            elif self.round == 4 and len(self.players) > 6 and self.mission_failed_vote_count > 1:
-                # mission failed
-                log.info('Mission failed')
+                log.info('Mission failed with special condition')
                 self.failed_missions_count += 1
                 mission_result_msg += '\nภารกิจสำเร็จไปแล้ว: ' + str(
                     self.success_missions_count) + '\nภารกิจล้มเหลวไปแล้ว: ' + str(self.failed_missions_count)
                 await client.safe_send_message(client.event_channel,
-                                               'ภารกิจล้มเหลว เนื่องจากเป็นรอบที่ 4 มีผู้เล่นอย่างน้อย 7 คน และมีสมาชิกในทีมทำภารกิจไม่สำเร็จ 2 คนขึ้นไป\n' + mission_result_msg,
-                                               expire_in=45)
+                                               'ภารกิจที่ ' + str(self.round) + ' ล้มเหลว เนื่องจากเป็นรอบที่ 4 มีผู้เล่นอย่างน้อย 7 คน และมีสมาชิกในทีมทำภารกิจไม่สำเร็จ 2 คนขึ้นไป\n' + mission_result_msg + '\n' + team_list_string,
+                                               expire_in=0)
+            elif self.mission_failed_vote_count > 0:
+                # mission failed
+                log.info('Mission failed')
+                self.failed_missions_count += 1
+                mission_result_msg += '\nภารกิจสำเร็จไปแล้ว: ' + str(self.success_missions_count) + '\nภารกิจล้มเหลวไปแล้ว: ' + str(self.failed_missions_count)
+                await client.safe_send_message(client.event_channel, 'ภารกิจที่ ' + str(self.round) + ' ล้มเหลว เนื่องจากมีสมาชิกในทีมอย่างน้อยหนึ่งคนทำภารกิจไม่สำเร็จ\n' + mission_result_msg + '\n' + team_list_string, expire_in=0)
             else:
                 # mission passed
                 log.info('Mission passed')
@@ -160,7 +167,7 @@ class Avalon:
                 mission_result_msg += '\nภารกิจสำเร็จไปแล้ว: ' + str(
                     self.success_missions_count) + '\nภารกิจล้มเหลวไปแล้ว: ' + str(self.failed_missions_count)
                 await client.safe_send_message(client.event_channel,
-                                   'ภารกิจสำเร็จ\n' + mission_result_msg, expire_in=45)
+                                   'ภารกิจที่ ' + str(self.round) + ' สำเร็จ\n' + mission_result_msg + '\n' + team_list_string, expire_in=0)
 
             self.round += 1
             if self.failed_missions_count == 3:
@@ -184,6 +191,8 @@ class Avalon:
                     self.round) + '\nหัวหน้าในการทำภารกิจครั้งนี้คือ ' + leader.mention + '\nพิมพ์ เลือก ตามด้วย @ ชื่อคนทีละคนเพื่อคัดเลือกคนเข้าทีมไปทำภารกิจ\nพิมพ์ ไม่เลือก ตามด้วย @ ชื่อคนทีละคน เพื่อนำคนออกจากทีมทำภารกิจ\nพิมพ์ ยืนยัน เพื่อยืนยันสมาชิกในทีมทำภารกิจ\nภารกิจนี้ต้องใช้ ' + str(self.config['mission_players'][str(len(self.players))][str(self.round)]) + ' คน\nผู้เล่นในขณะนี้: \n'
                 for player in self.players:
                     team_building_msg_string += player.mention + '\n'
+                if self.team_building_message is not None:
+                    client.safe_delete_message(self.team_building_message)
                 self.team_building_message = await client.safe_send_message(client.event_channel,
                                                                             team_building_msg_string,
                                                                             expire_in=0)
@@ -235,7 +244,7 @@ class Avalon:
                                                    expire_in=5, also_delete=message)
                 else:
                     if len(self.mission_team_members) < self.config['mission_players'][str(len(self.players))][str(self.round)]:
-                        self.mission_team_members.append(player)
+                        self.mission_team_members.append(one_member)
                     else:
                         await client.safe_send_message(client.event_channel,
                                                        message.author.mention + ' คนในทีมครบแล้วค่ะ เลือกเพิ่มไม่ได้แล้ว',
@@ -310,13 +319,18 @@ class Avalon:
                     self.approve_team_vote_count += 1
 
                 if len(self.players) == (self.approve_team_vote_count + self.reject_team_vote_count):
+                    vote_result = await self.print_vote_team_result()
+                    if self.team_voting_message is not None:
+                        await client.safe_delete_message(self.team_voting_message)
+                    self.team_voting_message = await client.safe_send_message(client.event_channel,
+                                                                              vote_result, expire_in=10)
                     await self.transition_from_voting(client)
                 else:
                     vote_result = await self.print_vote_team_result()
                     if self.team_voting_message is not None:
                         await client.safe_delete_message(self.team_voting_message)
                     team_voting_msg_string = 'พิมพ์ ผ่าน เพื่อให้ทีมนี้ไปทำภารกิจได้ พิมพ์ ไม่ผ่าน เพื่อไม่ให้ทีมนี้ไปทำภารกิจ\n' + vote_result
-                    team_voting_message = await client.safe_send_message(client.event_channel, team_voting_msg_string)
+                    self.team_voting_message = await client.safe_send_message(client.event_channel, team_voting_msg_string, expire_in=0)
                     await client.safe_delete_message(message)
             else:
                 await client.safe_send_message(client.event_channel,
@@ -332,13 +346,18 @@ class Avalon:
                     self.reject_team_vote_count += 1
 
                 if len(self.players) == (self.approve_team_vote_count + self.reject_team_vote_count):
+                    vote_result = await self.print_vote_team_result()
+                    if self.team_voting_message is not None:
+                        await client.safe_delete_message(self.team_voting_message)
+                    self.team_voting_message = await client.safe_send_message(client.event_channel,
+                                                                              vote_result, expire_in=10)
                     await self.transition_from_voting(client)
                 else:
                     vote_result = await self.print_vote_team_result()
                     if self.team_voting_message is not None:
                         await client.safe_delete_message(self.team_voting_message)
                     team_voting_msg_string = 'พิมพ์ ผ่าน เพื่อให้ทีมนี้ไปทำภารกิจได้ พิมพ์ ไม่ผ่าน เพื่อไม่ให้ทีมนี้ไปทำภารกิจ\n' + vote_result
-                    team_voting_message = await client.safe_send_message(client.event_channel, team_voting_msg_string)
+                    self.team_voting_message = await client.safe_send_message(client.event_channel, team_voting_msg_string, expire_in=0)
                     await client.safe_delete_message(message)
             else:
                 await client.safe_send_message(client.event_channel,
@@ -419,7 +438,6 @@ class Avalon:
             self.leader_player_index = 0
             self.vote_reject_steak = 0
 
-
     async def print_playerlist(self, client):
         output_message = 'เกม Avalon พิมพ์ เล่น เพื่อร่วมเข้าเกม\nผู้เล่นในขณะนี้: \n'
         for player in self.players:
@@ -454,12 +472,11 @@ class Avalon:
         if approve_percentage < 0.51:
             log.info('Mission Team Vote Failed')
             # voting failed
-            await client.safe_send_message(client.event_channel,'โหวตทีมทำภารกิจไม่ผ่าน! กลับไปตั้งทีมใหม่', expire_in=40)
+            await client.safe_send_message(client.event_channel, 'โหวตทีมทำภารกิจไม่ผ่าน! กลับไปตั้งทีมใหม่', expire_in=40)
             self.vote_reject_steak += 1
             if self.vote_reject_steak == 5:
-                await self.game_over(is_good_win=False)
+                await self.game_over(client, is_good_win=False)
             else:
-                self.round += 1
                 self.leader_player_index += 1
                 self.phase = AvalonGamePhase.TEAM_BUILDING
                 self.mission_team_members = []
@@ -471,6 +488,8 @@ class Avalon:
                 team_building_msg_string = 'ภารกิจที่ ' + str(self.round) + '\nหัวหน้าในการทำภารกิจครั้งนี้คือ ' + leader.mention + '\nพิมพ์ เลือก ตามด้วย @ ชื่อคนทีละคนเพื่อคัดเลือกคนเข้าทีมไปทำภารกิจ\nพิมพ์ ไม่เลือก ตามด้วย @ ชื่อคนทีละคน เพื่อนำคนออกจากทีมทำภารกิจ\nพิมพ์ ยืนยัน เพื่อยืนยันสมาชิกในทีมทำภารกิจ\nภารกิจนี้ต้องใช้ ' + str(self.config['mission_players'][str(len(self.players))][str(self.round)]) + ' คน\nผู้เล่นในขณะนี้: \n'
                 for player in self.players:
                     team_building_msg_string += player.mention + '\n'
+                if self.team_building_message is not None:
+                    client.safe_delete_message(self.team_building_message)
                 self.team_building_message = await client.safe_send_message(client.event_channel, team_building_msg_string,
                                                                         expire_in=0)
         else:

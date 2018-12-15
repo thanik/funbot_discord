@@ -1,14 +1,14 @@
-import asyncio
 import logging
 import json
 import random
 from enums import BotMode
 from enums import SpyfallGamePhase
 
-GAME_TIME = 420
-ENDING_PHASE_TIME = 31
-MIN_PLAYERS = 3
+GAME_TIME = 360
+ENDING_PHASE_TIME: int = 31
+MIN_PLAYERS = 5
 log = logging.getLogger(__name__)
+
 
 class Spyfall:
     def __init__(self):
@@ -43,12 +43,24 @@ class Spyfall:
         command = command.lower().strip()
         args = ' '.join(args).lstrip(' ').split(' ')
         if command == 'เล่น' and self.phase == SpyfallGamePhase.START:
-            self.players.append(message.author)
+            if message.author in self.players:
+                await client.safe_send_message(client.event_channel,
+                                               message.author.mention + ' อยู่ในเกมแล้ว อีควาย',
+                                               expire_in=10, also_delete=message)
+            else:
+                self.players.append(message.author)
+
             await self.print_playerlist(client)
             await client.safe_delete_message(message)
         elif command == 'ไม่เล่น' and self.phase == SpyfallGamePhase.START:
-            self.players.remove(message.author)
-            await client.safe_send_message(client.event_channel, message.author.mention + ' ไม่เล่นก็เรื่องของมึงค่ะ', expire_in=10, also_delete=message)
+            if message.author in self.players:
+                self.players.remove(message.author)
+                await client.safe_send_message(client.event_channel, message.author.mention + ' ไม่เล่นก็เรื่องของมึงค่ะ',
+                                           expire_in=10, also_delete=message)
+            else:
+                await client.safe_send_message(client.event_channel,
+                                               message.author.mention + ' ไม่ได้เล่นอยู่แล้ว จะไม่เล่นอีกทำไม',
+                                               expire_in=10, also_delete=message)
             await self.print_playerlist(client)
             await client.safe_delete_message(message)
         elif command == 'ทาย' and self.phase == SpyfallGamePhase.TALKING:
@@ -92,7 +104,7 @@ class Spyfall:
             if message.author in self.spies:
                 if args[0] == self.location['name']:
                     self.phase = SpyfallGamePhase.END
-                    await client.safe_send_message(client.event_channel, message.author.mention +  ' ถูกต้องค่ะ ยินดีด้วยยย', expire_in=10, also_delete=message)
+                    await client.safe_send_message(client.event_channel, message.author.mention +  ' ถูกต้องค่ะ ยินดีด้วยยย สปายเป็นฝ่ายชนะ', expire_in=30, also_delete=message)
                     ending_message = await self.show_place()
                     log.info(ending_message)
                     await client.safe_send_message(client.event_channel, ending_message, expire_in=0,
@@ -115,22 +127,24 @@ class Spyfall:
             if message_content == 'stop':
                 await self.reset_game()
                 client.mode = BotMode.NONE
+                client.time = -1
                 await client.change_presence(activity=None)
-                client.reset_vote()
+                await client.reset_vote()
                 await client.safe_send_message(message.channel, 'Current mode: ' + str(client.mode), expire_in=0)
 
     async def reset_game(self):
         self.players = []
-        self.role = []
+        self.roles = {}
+        self.started = False
         self.phase = SpyfallGamePhase.START
-        self.host_id = 0
+        # self.host_id = 0
         self.location = None
         self.votes = {}
         self.playerlist = None
         self.voted_player = {}
         self.spies = []
 
-    async def ending(self,time):
+    async def ending(self, time):
         end_message = 'หมดเวลา! คะแนนโหวตมีดังนี้\n'
         for vote_for_player in self.votes:
             end_message += vote_for_player.mention + ' : ' + str(self.votes[vote_for_player]) + ' คะแนนโหวต\n'
@@ -159,16 +173,16 @@ class Spyfall:
             if len(self.players) < MIN_PLAYERS:
                 if self.playerlist is not None:
                     await client.safe_delete_message(self.playerlist)
-                client.mode = BotMode.NONE
-                await client.change_presence(activity=None)
                 await self.reset_game()
                 await client.reset_vote()
                 await client.safe_send_message(client.event_channel, 'คนเล่นไม่พอค่ะ ต้อง ' + str(MIN_PLAYERS) + ' คนขึ้นไปนะคะ', expire_in=10)
                 await client.safe_delete_message(self.playerlist)
+                client.mode = BotMode.NONE
+                await client.change_presence(activity=None)
             else:
                 await client.safe_delete_message(self.playerlist)
                 self.phase = SpyfallGamePhase.TALKING
-                client.time = GAME_TIME
+                client.time = GAME_TIME + (len(self.players) * 30)
                 self.voted_player = {}
                 # setup game
                 self.location = random.choice(self.location_data['locations'])
@@ -200,5 +214,5 @@ class Spyfall:
                 self.main_message = await client.safe_send_message(client.event_channel, main_msg_string, expire_in=0)
 
         elif self.phase == SpyfallGamePhase.ENDING:
-            await client.safe_send_message(client.event_channel, 'หมดเวลา! พิมพ์ เฉลย เพื่อดูสถานที่ และตำแหน่งแต่ละคน', expire_in=10)
+            await client.safe_send_message(client.event_channel, 'หมดเวลา! สปายแพ้ พิมพ์ เฉลย เพื่อดูสถานที่ และตำแหน่งแต่ละคน', expire_in=10)
             self.phase = SpyfallGamePhase.END
