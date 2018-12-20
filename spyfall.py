@@ -131,6 +131,8 @@ class Spyfall:
                 await client.change_presence(activity=None)
                 await client.reset_vote()
                 await client.safe_send_message(message.channel, 'Current mode: ' + str(client.mode), expire_in=0)
+            elif message_content == 'force_stop':
+                client.time = 1
 
     async def reset_game(self):
         self.players = []
@@ -162,7 +164,7 @@ class Spyfall:
         return end_message
 
     async def trigger_timeout(self, client):
-        log.info('Spyfall: Timeout')
+        log.info('Spyfall: Timeout, Phase: ' + str(self.phase))
         if self.phase == SpyfallGamePhase.TALKING:
             self.phase = SpyfallGamePhase.ENDING
             client.time = ENDING_PHASE_TIME
@@ -176,7 +178,6 @@ class Spyfall:
                 await self.reset_game()
                 await client.reset_vote()
                 await client.safe_send_message(client.event_channel, 'คนเล่นไม่พอค่ะ ต้อง ' + str(MIN_PLAYERS) + ' คนขึ้นไปนะคะ', expire_in=10)
-                await client.safe_delete_message(self.playerlist)
                 client.mode = BotMode.NONE
                 await client.change_presence(activity=None)
             else:

@@ -11,13 +11,15 @@ class QuizGamePhase(Enum):
 
 class WerewolfGamePhase(Enum):
     START = 1
-    DAY = 2
-    NIGHT = 3
+    PREPARING = 2
+    DAY = 3
+    NIGHT = 4
 
 class WerewolfRole(Enum):
     WEREWOLF = 1
     SEER = 2
     VILLAGER = 3
+    DOCTOR = 4
 
 class AvalonGamePhase(Enum):
     START = 1

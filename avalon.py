@@ -192,7 +192,7 @@ class Avalon:
                 for player in self.players:
                     team_building_msg_string += player.mention + '\n'
                 if self.team_building_message is not None:
-                    client.safe_delete_message(self.team_building_message)
+                    await client.safe_delete_message(self.team_building_message)
                 self.team_building_message = await client.safe_send_message(client.event_channel,
                                                                             team_building_msg_string,
                                                                             expire_in=0)

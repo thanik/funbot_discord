@@ -91,8 +91,8 @@ class FunBot(discord.Client):
                     self.votes[BotMode.AVALON] += 1
                 elif args[0].lower() == 'werewolf':
                     self.votes[BotMode.WEREWOLF] += 1
-                elif args[0].lower() == 'quiz':
-                    self.votes[BotMode.QUIZ] += 1
+                # elif args[0].lower() == 'quiz':
+                #     self.votes[BotMode.QUIZ] += 1
                 vote_message = 'ผลโหวตเลือกเกม:\nSpyfall: ' + str(self.votes[BotMode.SPYFALL])
                 vote_message += '\nAvalon: ' + str(self.votes[BotMode.AVALON])
                 vote_message += '\nWerewolf: ' + str(self.votes[BotMode.WEREWOLF])
@@ -102,6 +102,8 @@ class FunBot(discord.Client):
                 self.game_vote_result_message = await self.safe_send_message(channel, vote_message, expire_in=0)
                 await self.safe_delete_message(message)
                 log.info('Start counting down: ' + str(self.time))
+            elif command == 'เล่น' and args[0] == '':
+                await self.safe_send_message(channel, 'ขณะนี้อยู่ในช่วงโหวตเกมที่จะเล่นอยู่ค่ะ พิมพ์ p ตามด้วยชื่อเกม หรือ เล่น ตามด้วยชื่อเกม นะคะ', expire_in=10, also_delete=message)
 
         elif self.mode == BotMode.SPYFALL:
             log.info('Mode: Spyfall')
@@ -109,6 +111,9 @@ class FunBot(discord.Client):
         elif self.mode == BotMode.AVALON:
             log.info('Mode: Avalon')
             await self.avalon.public_command(client=self, message=message)
+        elif self.mode == BotMode.WEREWOLF:
+            log.info('Mode: Werewolf')
+            await self.werewolf.public_command(client=self, message=message)
 
     async def trigger_timeout(self):
         if self.mode == BotMode.NONE:
@@ -122,7 +127,7 @@ class FunBot(discord.Client):
         await self.safe_send_message(self.event_channel, 'พิมพ์ เล่น เพื่อเล่นเกม', expire_in=self.config['LOBBY_TIME'])
 
     async def outside_event_room(self, message, channel):
-        await self.prompt_bot.getMessage(client=self, message=message, channel=channel);
+        await self.prompt_bot.get_message(client=self, message=message, channel=channel);
 
     async def private_msg(self, message, channel):
         print('Message from {0.author} {0.channel.id}: {0.content}'.format(message))
@@ -132,7 +137,6 @@ class FunBot(discord.Client):
             await self.spyfall.private_command(is_admin=message.author.id == self.config['ADMIN_ID'], client=self, message=message)
         elif self.mode == BotMode.AVALON:
             await self.avalon.private_command(is_admin=message.author.id == self.config['ADMIN_ID'], client=self, message=message)
-
             log.info('Mode: Avalon')
         # await self.safe_send_message(channel, 'สวัสดีค่ะ', expire_in=0)
 
@@ -191,6 +195,8 @@ class FunBot(discord.Client):
                     await self.spyfall.trigger_timeout(client=self)
                 elif self.mode == BotMode.AVALON:
                     await self.avalon.trigger_timeout(client=self)
+                elif self.mode == BotMode.WEREWOLF:
+                    await self.werewolf.trigger_timeout(client=self)
             await asyncio.sleep(1)
 
     async def clean_chat(self):
