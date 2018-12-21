@@ -14,6 +14,7 @@ class WerewolfGamePhase(Enum):
     PREPARING = 2
     DAY = 3
     NIGHT = 4
+    END = 5
 
 class WerewolfRole(Enum):
     WEREWOLF = 1

@@ -137,7 +137,8 @@ class FunBot(discord.Client):
             await self.spyfall.private_command(is_admin=message.author.id == self.config['ADMIN_ID'], client=self, message=message)
         elif self.mode == BotMode.AVALON:
             await self.avalon.private_command(is_admin=message.author.id == self.config['ADMIN_ID'], client=self, message=message)
-            log.info('Mode: Avalon')
+        elif self.mode == BotMode.WEREWOLF:
+            await self.werewolf.private_command(is_admin=message.author.id == self.config['ADMIN_ID'], client=self, message=message)
         # await self.safe_send_message(channel, 'สวัสดีค่ะ', expire_in=0)
 
     async def admin_command_msg(self, message):
