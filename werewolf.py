@@ -94,13 +94,19 @@ class Werewolf:
                                                        '*หมาป่า*\nคุณคือหมาป่า หน้าที่ของคุณคือ คุณจะต้องฆ่าคนในหมู่บ้านในแต่ละคืน หากจำนวนชาวบ้านเท่ากับจำนวนหมาป่าในเกม หรือชาวบ้านตายหมด หมาป่าจะเป็นฝ่ายชนะ\n' + all_player_msg + '\n' + werewolf_list,
                                                        expire_in=0)
                     elif self.roles[player] == WerewolfRole.DOCTOR:
-                        await client.safe_send_message(player.dm_channel, '*หมอ*\nคุณคือหมา เอ้ย หมอ คุณก็เป็นชาวบ้านคนหนึ่งที่สามารถป้องกันการฆ่าของหมาป่าในแต่ละคืนได้ โดยจะสามารถเลือกป้องกันตนเองหรือคนอื่นก็ได้\n' + all_player_msg, expire_in=0)
+                        await client.safe_send_message(player.dm_channel,
+                                                       '*หมอ*\nคุณคือหมา เอ้ย หมอ คุณก็เป็นชาวบ้านคนหนึ่งที่สามารถป้องกันการฆ่าของหมาป่าในแต่ละคืนได้ โดยจะสามารถเลือกป้องกันตนเองหรือคนอื่นก็ได้\n' + all_player_msg,
+                                                       expire_in=0)
 
                     elif self.roles[player] == WerewolfRole.SEER:
-                        await client.safe_send_message(player.dm_channel, '*เซียร์*\nคุณคือเซียร์ ผู้หยั่งรู้ ในแต่ละคืนเซียร์จะสามารถมองดูว่าคนๆ นั้นจริงๆ เป็นหมาป่าหรือไม่ โดยสามารถดูได้เพียงคืนละหนึ่งคนเท่านั้น\n' + all_player_msg, expire_in=0)
+                        await client.safe_send_message(player.dm_channel,
+                                                       '*เซียร์*\nคุณคือเซียร์ ผู้หยั่งรู้ ในแต่ละคืนเซียร์จะสามารถมองดูว่าคนๆ นั้นจริงๆ เป็นหมาป่าหรือไม่ โดยสามารถดูได้เพียงคืนละหนึ่งคนเท่านั้น\n' + all_player_msg,
+                                                       expire_in=0)
 
                     elif self.roles[player] == WerewolfRole.VILLAGER:
-                        await client.safe_send_message(player.dm_channel, '*ชาวบ้าน*\nคุณคือชาวบ้านตาดำๆ ไม่มีพลังวิเศษใดๆ เลย เอาตัวรอดให้ได้ละกัน\n' + all_player_msg, expire_in=0)
+                        await client.safe_send_message(player.dm_channel,
+                                                       '*ชาวบ้าน*\nคุณคือชาวบ้านตาดำๆ ไม่มีพลังวิเศษใดๆ เลย เอาตัวรอดให้ได้ละกัน\n' + all_player_msg,
+                                                       expire_in=0)
 
                 await client.safe_send_message(client.event_channel,
                                                'ทุกคนได้รับบทของตัวเองเรียบร้อยแล้ว คุณมีเวลาในการอ่านบทและทำความเข้าใจใน ' + str(
@@ -113,7 +119,8 @@ class Werewolf:
             log.info('Werewolf: Transition DAY to NIGHT')
             # vote killing process
             if len(self.kill_votes) == 0:
-                await client.safe_send_message(client.event_channel, 'ไม่มีใครโหวตให้ฆ่าใคร พระอาทิตย์กำลังจะตกดิน...', expire_in=10)
+                await client.safe_send_message(client.event_channel, 'ไม่มีใครโหวตให้ฆ่าใคร พระอาทิตย์กำลังจะตกดิน...',
+                                               expire_in=10)
             else:
                 # find max vote
                 killing_player = max(self.kill_votes_count.items(), key=operator.itemgetter(1))[0]
@@ -123,7 +130,9 @@ class Werewolf:
                     if self.werewolf_index >= len(self.werewolves) - 1:
                         self.werewolf_index = 0
                 self.alive_players.remove(killing_player)
-                await client.safe_send_message(client.event_channel, 'สรุปผลโหวต: ' + killing_player.mention + ' จะถูกรุมประชาทัณฑ์จนตาย ลาก่อยค่ะ', expire_in=10)
+                await client.safe_send_message(client.event_channel,
+                                               'สรุปผลโหวต: ' + killing_player.mention + ' จะถูกรุมประชาทัณฑ์จนตาย ลาก่อยค่ะ',
+                                               expire_in=10)
             # check winning condition before transition
             if len(self.werewolves) == 0:
                 await self.game_over(client=client, is_werewolf_win=False)
@@ -141,7 +150,9 @@ class Werewolf:
         self.kill_player_index = -1
         self.look_player_index = -1
         player_choice_msg = await self.print_player_choices(self.alive_players)
-        await client.safe_send_message(client.event_channel, 'คืนที่ ' + str(self.night_count) + ' ในยามค่ำคืนนี้ เหล่าหมาป่าออกหากินเสียแล้ว... อาจจะมีชาวบ้านถูกจับฆ่าโดยไม่รู้ตัวก็ได้นะ.. หมาป่า คุณหมอ และเซียร์ ทำหน้าที่ของตัวเองด้วยค่ะ', expire_in=0)
+        await client.safe_send_message(client.event_channel, 'คืนที่ ' + str(
+            self.night_count) + ' ในยามค่ำคืนนี้ เหล่าหมาป่าออกหากินเสียแล้ว... อาจจะมีชาวบ้านถูกจับฆ่าโดยไม่รู้ตัวก็ได้นะ.. หมาป่า คุณหมอ และเซียร์ ทำหน้าที่ของตัวเองด้วยค่ะ',
+                                       expire_in=0)
 
         for player in self.alive_players:
             if player.dm_channel is None:
@@ -149,17 +160,21 @@ class Werewolf:
 
             if self.roles[player] == WerewolfRole.DOCTOR:
                 await client.safe_send_message(player.dm_channel,
-                    'โปรดเลือกคนที่คุณต้องการจะปกป้องจากการฆ่าของหมาป่า โดยพิมพ์ กัน ตามด้วยเลขประจำตัวของชาวบ้านที่ต้องการปกป้อง\n' + player_choice_msg, expire_in=0)
+                                               'โปรดเลือกคนที่คุณต้องการจะปกป้องจากการฆ่าของหมาป่า โดยพิมพ์ กัน ตามด้วยเลขประจำตัวของชาวบ้านที่ต้องการปกป้อง\n' + player_choice_msg,
+                                               expire_in=0)
             elif self.roles[player] == WerewolfRole.SEER:
                 await client.safe_send_message(player.dm_channel,
-                    'โปรดเลือกคนที่คุณต้องการดูว่าเป็นหมาป่าหรือไม่ โดยพิมพ์ ดู ตามด้วยเลขประจำตัวของชาวบ้านที่ต้องการดู\n' + player_choice_msg, expire_in=0)
+                                               'โปรดเลือกคนที่คุณต้องการดูว่าเป็นหมาป่าหรือไม่ โดยพิมพ์ ดู ตามด้วยเลขประจำตัวของชาวบ้านที่ต้องการดู\n' + player_choice_msg,
+                                               expire_in=0)
             elif self.roles[player] == WerewolfRole.WEREWOLF:
                 if self.werewolves[self.werewolf_index] == player:
                     await client.safe_send_message(player.dm_channel,
-                        'ตานี้เป็นตาของคุณในการเลือกจะฆ่าชาวบ้าน โปรดเลือกโดยพิมพ์ ฆ่า ตามด้วยเลขประจำตัวของชาวบ้านที่ต้องการฆ่า\n' + player_choice_msg, expire_in=0)
+                                                   'ตานี้เป็นตาของคุณในการเลือกจะฆ่าชาวบ้าน โปรดเลือกโดยพิมพ์ ฆ่า ตามด้วยเลขประจำตัวของชาวบ้านที่ต้องการฆ่า\n' + player_choice_msg,
+                                                   expire_in=0)
                 else:
                     await client.safe_send_message(player.dm_channel,
-                        'ตานี้ คุณยังไม่ใช่ตาของคุณในการเลือกจะฆ่าชาวบ้าน แต่คุณสามารถปรึกษาส่วนตัวกับหมาป่าอีกตัวได้', expire_in=0)
+                                                   'ตานี้ คุณยังไม่ใช่ตาของคุณในการเลือกจะฆ่าชาวบ้าน แต่คุณสามารถปรึกษาส่วนตัวกับหมาป่าอีกตัวได้',
+                                                   expire_in=0)
 
     async def transition_to_day(self, client):
         self.phase = WerewolfGamePhase.DAY
@@ -173,7 +188,9 @@ class Werewolf:
             await client.safe_send_message(client.event_channel, 'เมื่อคืนไม่มีคนตาย น่าอัศจรรย์ใจยิ่งนัก', expire_in=0)
         else:
             killed_player = self.alive_players[self.kill_player_index]
-            await client.safe_send_message(client.event_channel, 'เมื่อคืนมีคนตาย คนๆ นั้นก็คือ ' + killed_player.mention + ' ขอแสดงความเสียใจด้วย', expire_in=0)
+            await client.safe_send_message(client.event_channel,
+                                           'เมื่อคืนมีคนตาย คนๆ นั้นก็คือ ' + killed_player.mention + ' ขอแสดงความเสียใจด้วย',
+                                           expire_in=0)
             # if wolf were kill
             if self.werewolves[self.werewolf_index] == killed_player:
                 self.werewolves.remove(killed_player)
@@ -188,7 +205,9 @@ class Werewolf:
         for player in self.alive_players:
             self.kill_votes_count[player] = 0
             alive_player_list += player.mention + '\n'
-        self.day_message = await client.safe_send_message(client.event_channel, 'พิมพ์ โหวต ตามด้วย @ ชื่อคนที่ต้องการจะโหวตให้ฆ่า หากโหวตไม่ฆ่าใครเลยให้พิมพ์ ไม่ฆ่า\n' + alive_player_list, expire_in=0)
+        self.day_message = await client.safe_send_message(client.event_channel,
+                                                          'พิมพ์ โหวต ตามด้วย @ ชื่อคนที่ต้องการจะโหวตให้ฆ่า หากโหวตไม่ฆ่าใครเลยให้พิมพ์ ไม่ฆ่า\n' + alive_player_list,
+                                                          expire_in=0)
 
     async def public_command(self, client, message):
         log.info('Werewolf: Public')
@@ -210,8 +229,9 @@ class Werewolf:
         elif command == 'ไม่เล่น' and self.phase == WerewolfGamePhase.START:
             if message.author in self.players:
                 self.players.remove(message.author)
-                await client.safe_send_message(client.event_channel, message.author.mention + ' ไม่เล่นก็เรื่องของมึงค่ะ',
-                                           expire_in=10, also_delete=message)
+                await client.safe_send_message(client.event_channel,
+                                               message.author.mention + ' ไม่เล่นก็เรื่องของมึงค่ะ',
+                                               expire_in=10, also_delete=message)
             else:
                 await client.safe_send_message(client.event_channel,
                                                message.author.mention + ' ไม่ได้เล่นอยู่แล้ว จะไม่เล่นอีกทำไม',
@@ -241,12 +261,17 @@ class Werewolf:
                         if self.vote_kill_list_message is not None:
                             await client.safe_delete_message(self.vote_kill_list_message)
                         await client.safe_delete_message(message)
-                        await client.safe_send_message(client.event_channel, message.author.mention + ' ได้โหวตฆ่า ' + one_member.mention, expire_in=5)
+                        await client.safe_send_message(client.event_channel,
+                                                       message.author.mention + ' ได้โหวตฆ่า ' + one_member.mention,
+                                                       expire_in=5)
                         vote_message_string = await self.print_vote_kill_list()
-                        self.vote_kill_list_message = await client.safe_send_message(client.event_channel, vote_message_string, expire_in=0)
+                        self.vote_kill_list_message = await client.safe_send_message(client.event_channel,
+                                                                                     vote_message_string, expire_in=0)
                         if len(self.kill_votes) == len(self.alive_players):
                             client.time = 60
-                            await client.safe_send_message(client.event_channel, 'ทุกคนโหวตครบแล้ว พระอาทิตย์จะตกดินในอีก 60 วินาที', expire_in=10)
+                            await client.safe_send_message(client.event_channel,
+                                                           'ทุกคนโหวตครบแล้ว พระอาทิตย์จะตกดินในอีก 60 วินาที',
+                                                           expire_in=10)
                 else:
                     await client.safe_send_message(client.event_channel,
                                                    message.author.mention + ' คนตายไม่มีสิทธิ์พูดค่ะ',
@@ -267,9 +292,11 @@ class Werewolf:
                         await client.safe_delete_message(self.vote_kill_list_message)
                     await client.safe_delete_message(message)
                     vote_message_string = await self.print_vote_kill_list()
-                    self.vote_kill_list_message = await client.safe_send_message(client.event_channel, vote_message_string,
+                    self.vote_kill_list_message = await client.safe_send_message(client.event_channel,
+                                                                                 vote_message_string,
                                                                                  expire_in=0)
-                    self.not_kill_vote.append(message.author)
+                    if message.author not in self.not_kill_vote:
+                        self.not_kill_vote.append(message.author)
                     if len(self.not_kill_vote) == len(self.alive_players):
                         client.time = 5
                         await client.safe_send_message(client.event_channel,
@@ -282,8 +309,8 @@ class Werewolf:
                                                    expire_in=10, also_delete=message)
             else:
                 await client.safe_send_message(client.event_channel,
-                                           message.author.mention + ' ไม่ได้อยู่ในเกม อย่าเสือกค่ะ',
-                                           expire_in=10, also_delete=message)
+                                               message.author.mention + ' ไม่ได้อยู่ในเกม อย่าเสือกค่ะ',
+                                               expire_in=10, also_delete=message)
 
     async def private_command(self, is_admin, client, message):
         log.info('Werewolf: Private')
@@ -298,17 +325,21 @@ class Werewolf:
                     index = int(args[0])
                     if 0 < index <= len(self.alive_players):
                         self.kill_player_index = index - 1
-                        name = self.alive_players[self.kill_player_index].display_name + ' (' + self.alive_players[self.kill_player_index].name + ')'
-                        await client.safe_send_message(message.channel, 'คุณได้เลือก ' + name + ' เพื่อฆ่าทิ้งแล้ว', expire_in=0)
+                        name = self.alive_players[self.kill_player_index].display_name + ' (' + self.alive_players[
+                            self.kill_player_index].name + ')'
+                        await client.safe_send_message(message.channel, 'คุณได้เลือก ' + name + ' เพื่อฆ่าทิ้งแล้ว',
+                                                       expire_in=0)
                         log.info(name + 'SELECTED FOR KILL')
 
-                        if (self.is_doctor_died or self.protect_player_index != -1) and (self.is_seer_died or self.look_player_index != -1):
+                        if (self.is_doctor_died or self.protect_player_index != -1) and (
+                                self.is_seer_died or self.look_player_index != -1):
                             await self.transition_to_day(client=client)
                     else:
                         await client.safe_send_message(message.channel, 'เลขประจำตัวผู้เล่นไม่ถูกต้อง', expire_in=0)
 
             elif command == 'กัน' and self.phase == WerewolfGamePhase.NIGHT:
-                if self.roles[message.author] == WerewolfRole.DOCTOR and len(args) == 1 and self.protect_player_index == -1:
+                if self.roles[message.author] == WerewolfRole.DOCTOR and len(
+                        args) == 1 and self.protect_player_index == -1:
                     index = int(args[0])
                     if 0 < index <= len(self.alive_players):
                         self.protect_player_index = index - 1
@@ -332,7 +363,7 @@ class Werewolf:
                             self.look_player_index].name + ')'
                         if self.roles[self.alive_players[self.look_player_index]] == WerewolfRole.WEREWOLF:
                             await client.safe_send_message(message.channel, name + ' เป็นหมาป่า!',
-                                                       expire_in=0)
+                                                           expire_in=0)
                         else:
                             await client.safe_send_message(message.channel, name + ' ไม่ได้เป็นหมาป่า',
                                                            expire_in=0)
@@ -372,13 +403,15 @@ class Werewolf:
         for player in self.kill_votes:
             output_message += player.mention + ' ได้โหวตฆ่า ' + self.kill_votes[player].mention + '\n'
         if len(self.kill_votes) > 1:
-            output_message += '\n\nและคนที่โดนโหวตฆ่ามากที่สุดคือ: \n' + max(self.kill_votes_count.items(), key=operator.itemgetter(1))[0].mention
+            output_message += '\n\nและคนที่โดนโหวตฆ่ามากที่สุดคือ: \n' + \
+                              max(self.kill_votes_count.items(), key=operator.itemgetter(1))[0].mention
         return output_message
 
     async def print_player_choices(self, generating_list):
         output_message = 'รายชื่อ:\n'
         for i in range(0, len(generating_list)):
-            output_message += str(i+1) + ' ' + generating_list[i].display_name + ' (' + generating_list[i].name + ')\n'
+            output_message += str(i + 1) + ' ' + generating_list[i].display_name + ' (' + generating_list[
+                i].name + ')\n'
         return output_message
 
     async def check_win_condition(self, client):
@@ -405,9 +438,11 @@ class Werewolf:
             roles_list += player.mention + ' : ' + roles_names[self.roles[player]] + '\n'
 
         if is_werewolf_win:
-            await client.safe_send_message(client.event_channel, 'ฝ่ายหมาป่าชนะ!\nเฉลยตำแหน่ง:\n' + roles_list, expire_in=0)
+            await client.safe_send_message(client.event_channel, 'ฝ่ายหมาป่าชนะ!\nเฉลยตำแหน่ง:\n' + roles_list,
+                                           expire_in=0)
         else:
-            await client.safe_send_message(client.event_channel, 'ฝ่ายชาวบ้านชนะ!\nเฉลยตำแหน่ง:\n' + roles_list, expire_in=0)
+            await client.safe_send_message(client.event_channel, 'ฝ่ายชาวบ้านชนะ!\nเฉลยตำแหน่ง:\n' + roles_list,
+                                           expire_in=0)
 
         client.mode = BotMode.NONE
         await client.change_presence(activity=None)
