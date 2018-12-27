@@ -54,6 +54,10 @@ class FunBot(discord.Client):
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
         self.event_channel = self.get_channel(self.config['CHANNEL_ID'])
+        self.greeting_channel = self.get_channel(self.config['GREETING_CHANNEL_ID'])
+
+    async def on_member_join(self, member):
+        await self.safe_send_message(self.greeting_channel, 'สวัสดีค่ะ คุณ ' + member.mention + ' ยินดีต้อนรับสู่ Keyakizaka46 Thai Fan Discord นะคะ ก่อนอื่นเลยรบกวนแนะนำตัว ชื่อเล่นและโอชิของตัวเองด้วยค่ะ ขอบคุณนะคะ', expire_in=0)
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -148,17 +152,25 @@ class FunBot(discord.Client):
         command = command.lower().strip()
         args = ' '.join(args).lstrip(' ').split(' ')
         log.info(args)
-        if command == 'switch':
-            if args[0] == 'spyfall':
-                log.info('Switching to SPYFALL mode..')
-                self.mode = BotMode.SPYFALL
-            elif args[0] == '':
-                log.info('Missing argument')
-                await self.safe_send_message(message.channel, 'Missing argument', expire_in=0)
-            await self.safe_send_message(message.channel, 'Current mode: ' + str(self.mode), expire_in=0)
-        elif command == 'stop':
-            self.mode = BotMode.NONE
-            await self.safe_send_message(message.channel, 'Current mode: ' + str(self.mode), expire_in=0)
+        if message.author.id == self.config['ADMIN_ID']:
+            if command == 'switch':
+                if args[0] == 'spyfall':
+                    log.info('Switching to SPYFALL mode..')
+                    self.mode = BotMode.SPYFALL
+                elif args[0] == '':
+                    log.info('Missing argument')
+                    await self.safe_send_message(message.channel, 'Missing argument', expire_in=0)
+                await self.safe_send_message(message.channel, 'Current mode: ' + str(self.mode), expire_in=0)
+            elif command == 'stop':
+                self.mode = BotMode.NONE
+                await self.safe_send_message(message.channel, 'Current mode: ' + str(self.mode), expire_in=0)
+            elif command == 's' and len(args) > 1:
+                send_channel = self.get_channel(int(args[0]))
+                message = ''
+                for i in range(1, len(args)):
+                    message += args[i] + ' '
+                if send_channel is not None:
+                    await self.safe_send_message(send_channel, message, expire_in=0)
 
     ## utils
     async def reset_vote(self):
