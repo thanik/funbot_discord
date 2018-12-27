@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 class Avalon:
     def __init__(self):
-        with open('configs/avalon.json', 'r') as f:
+        with open('configs/avalon.json', 'r', encoding='utf8') as f:
             self.config = json.load(f)
         self.players = []
         self.roles = {}

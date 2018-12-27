@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 class Spyfall:
     def __init__(self):
-        with open('configs/spyfall.json', 'r') as f:
+        with open('configs/spyfall.json', 'r', encoding='utf8') as f:
             self.location_data = json.load(f)
 
         self.players = []

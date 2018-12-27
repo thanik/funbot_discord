@@ -28,7 +28,7 @@ GAMES_NAMES = {
 class FunBot(discord.Client):
     def __init__(self):
 
-        with open('configs/main.json', 'r') as f:
+        with open('configs/main.json', 'r', encoding='utf8') as f:
             self.config = json.load(f)
 
         self.spyfall = Spyfall()
