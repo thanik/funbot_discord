@@ -125,10 +125,14 @@ class Werewolf:
                 # find max vote
                 killing_player = max(self.kill_votes_count.items(), key=operator.itemgetter(1))[0]
                 # if wolf were kill
-                if self.werewolves[self.werewolf_index] == killing_player:
-                    self.werewolves.remove(killing_player)
+                if self.roles[killing_player] == WerewolfRole.WEREWOLF:
                     if self.werewolf_index >= len(self.werewolves) - 1:
                         self.werewolf_index = 0
+                    self.werewolves.remove(killing_player)
+                elif self.roles[killing_player] == WerewolfRole.DOCTOR:
+                    self.is_doctor_died = True
+                elif self.roles[killing_player] == WerewolfRole.SEER:
+                    self.is_seer_died = True
                 self.alive_players.remove(killing_player)
                 await client.safe_send_message(client.event_channel,
                                                'สรุปผลโหวต: ' + killing_player.mention + ' จะถูกรุมประชาทัณฑ์จนตาย ลาก่อยค่ะ',
@@ -192,10 +196,14 @@ class Werewolf:
                                            'เมื่อคืนมีคนตาย คนๆ นั้นก็คือ ' + killed_player.mention + ' ขอแสดงความเสียใจด้วย',
                                            expire_in=0)
             # if wolf were kill
-            if self.werewolves[self.werewolf_index] == killed_player:
-                self.werewolves.remove(killed_player)
+            if self.roles[killed_player] == WerewolfRole.WEREWOLF:
                 if self.werewolf_index >= len(self.werewolves) - 1:
                     self.werewolf_index = 0
+                self.werewolves.remove(killed_player)
+            elif self.roles[killed_player] == WerewolfRole.DOCTOR:
+                self.is_doctor_died = True
+            elif self.roles[killed_player] == WerewolfRole.SEER:
+                self.is_seer_died = True
             self.alive_players.remove(killed_player)
         # reset vote
         self.kill_votes = {}
@@ -252,26 +260,31 @@ class Werewolf:
                                                        message.author.mention + ' คนนี้ไม่อยู่ในเกมค่ะ อีโง่',
                                                        expire_in=5, also_delete=message)
                     else:
-                        if message.author in self.kill_votes:
-                            self.kill_votes_count[self.kill_votes[message.author]] -= 1
-                        if message.author in self.not_kill_vote:
-                            self.not_kill_vote.remove(message.author)
-                        self.kill_votes[message.author] = one_member
-                        self.kill_votes_count[one_member] += 1
-                        if self.vote_kill_list_message is not None:
-                            await client.safe_delete_message(self.vote_kill_list_message)
-                        await client.safe_delete_message(message)
-                        await client.safe_send_message(client.event_channel,
-                                                       message.author.mention + ' ได้โหวตฆ่า ' + one_member.mention,
-                                                       expire_in=5)
-                        vote_message_string = await self.print_vote_kill_list()
-                        self.vote_kill_list_message = await client.safe_send_message(client.event_channel,
-                                                                                     vote_message_string, expire_in=0)
-                        if len(self.kill_votes) == len(self.alive_players):
-                            client.time = 60
+                        if one_member in self.alive_players:
+                            if message.author in self.kill_votes:
+                                self.kill_votes_count[self.kill_votes[message.author]] -= 1
+                            if message.author in self.not_kill_vote:
+                                self.not_kill_vote.remove(message.author)
+                            self.kill_votes[message.author] = one_member
+                            self.kill_votes_count[one_member] += 1
+                            if self.vote_kill_list_message is not None:
+                                await client.safe_delete_message(self.vote_kill_list_message)
+                            await client.safe_delete_message(message)
                             await client.safe_send_message(client.event_channel,
-                                                           'ทุกคนโหวตครบแล้ว พระอาทิตย์จะตกดินในอีก 60 วินาที',
-                                                           expire_in=10)
+                                                           message.author.mention + ' ได้โหวตฆ่า ' + one_member.mention,
+                                                           expire_in=5)
+                            vote_message_string = await self.print_vote_kill_list()
+                            self.vote_kill_list_message = await client.safe_send_message(client.event_channel,
+                                                                                         vote_message_string, expire_in=0)
+                            if len(self.kill_votes) == len(self.alive_players) and client.time > 60:
+                                client.time = 60
+                                await client.safe_send_message(client.event_channel,
+                                                               'ทุกคนโหวตครบแล้ว พระอาทิตย์จะตกดินในอีก 60 วินาที',
+                                                               expire_in=10)
+                        else:
+                            await client.safe_send_message(client.event_channel,
+                                                           message.author.mention + ' คนนี้ตายไปแล้วค่ะ',
+                                                           expire_in=10, also_delete=message)
                 else:
                     await client.safe_send_message(client.event_channel,
                                                    message.author.mention + ' คนตายไม่มีสิทธิ์พูดค่ะ',
@@ -435,7 +448,10 @@ class Werewolf:
         }
         roles_list = ''
         for player in self.roles:
-            roles_list += player.mention + ' : ' + roles_names[self.roles[player]] + '\n'
+            roles_list += player.mention + ' : ' + roles_names[self.roles[player]]
+            if player not in self.alive_players:
+                roles_list += ' (ตายแล้ว)'
+            roles_list += '\n'
 
         if is_werewolf_win:
             await client.safe_send_message(client.event_channel, 'ฝ่ายหมาป่าชนะ!\nเฉลยตำแหน่ง:\n' + roles_list,

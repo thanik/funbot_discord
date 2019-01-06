@@ -38,6 +38,7 @@ class FunBot(discord.Client):
         self.prompt_bot = PromptBot()
         self.mode = BotMode.NONE
         self.time = -1
+        self.text_cooldown = 0
         self.votes = {
             BotMode.SPYFALL: 0,
             BotMode.AVALON: 0,
@@ -210,13 +211,16 @@ class FunBot(discord.Client):
                     await self.avalon.trigger_timeout(client=self)
                 elif self.mode == BotMode.WEREWOLF:
                     await self.werewolf.trigger_timeout(client=self)
+
+            if self.text_cooldown > 0:
+                self.text_cooldown -= 1
             await asyncio.sleep(1)
 
     async def clean_chat(self):
         await self.wait_until_ready()
         while not self.is_closed():
             if self.mode == BotMode.NONE:
-                log.info('clean_chat_triggered')
+                # log.info('clean_chat_triggered')
                 await self.get_channel(self.config['CHANNEL_ID']).purge(check=self.is_admin_msg)
             await asyncio.sleep(self.config['CLEAR_CHAT_INTERVAL'])
 
